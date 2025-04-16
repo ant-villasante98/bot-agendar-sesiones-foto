@@ -9,25 +9,17 @@ export class GoogleCalendarService {
   private calendar = google.calendar('v3');
   private oauth2Client: OAuth2Client;
 
-  constructor(private configService: ConfigService) {
+  constructor(private readonly configService: ConfigService) {
     this.oauth2Client = new google.auth.OAuth2(
       this.configService.get<string>('GOOGLE_CLIENT_ID'),
       this.configService.get<string>('GOOGLE_CLIENT_SECRET'),
       this.configService.get<string>('GOOGLE_REDIRECT_URI'),
     );
+      this.oauth2Client.setCredentials({
+        access_token: 'a29.a0AZYkNZip5l8hWnQSBw0p2KKHkv9pq32-QdLe3XY2Mp6cpvzAM8FkBXoRe4HLd48rOVF3Nn_YKUkso3d5jBxRJLajGswp01RXNDO9T_UIq6DyGyPN21hz4imBx8otGecdLB1tfDFxgEtTrlAP6Hx-cZHx2FMObU2cQ3Os_N17aCgYKAX0SARMSFQHGX2Mi6FnwcBgC2KMpxu6pq9dykg0175',
+        refresh_token: '1//0hMsZbjMZ3yoBCgYIARAAGBESNwF-L9Ire4X6Qml2huDzmqBltKHJ8hcP5y7IxOkfHbK0XiuUDeb2MAROEihGf8qvzUZTEkUZyoU',
+      });
   }
-  // constructor() {
-  //   this.oauth2Client = new google.auth.OAuth2(
-  //     process.env.GOOGLE_CLIENT_ID,
-  //     process.env.GOOGLE_CLIENT_SECRET,
-  //     process.env.GOOGLE_REDIRECT_URI,
-  //   );
-  //   console.log(process.env);
-  //   this.oauth2Client.setCredentials({
-  //     access_token: process.env.GOOGLE_ACCESS_TOKEN,
-  //     refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-  //   });
-  // }
 
   async getCalendarId(): Promise<string> {
     try {
@@ -51,11 +43,11 @@ export class GoogleCalendarService {
       summary,
       start: {
         dateTime,
-        timeZone: 'America/Mexico_City',
+        timeZone: 'America/Lima',
       },
       end: {
         dateTime,
-        timeZone: 'America/Mexico_City',
+        timeZone: 'America/Lima',
       },
     };
 

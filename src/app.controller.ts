@@ -7,6 +7,11 @@ import { GoogleCalendarService } from './google-calendar/google-calendar.service
 export class AppController {
   constructor(private readonly calendarService: GoogleCalendarService) {}
 
+  @Get()
+  hello() {
+    return 'hola';
+  }
+
   @Get('google/auth')
   redirectToGoogle(@Res() res: Response) {
     const url = this.calendarService.generateAuthUrl();

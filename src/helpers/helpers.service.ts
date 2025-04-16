@@ -14,15 +14,15 @@ export class HelpersService {
     const fieldsMap = new Map<string, string>();
     for (const field of fieldList) {
       // set value key
-      const starKey: number = 0;
+      const startKey: number = 0;
       const endKey: number = field.indexOf(':');
 
       // set value Value
-      const starValue: number = field.indexOf(':');
+      const startValue: number = field.indexOf(':');
 
       if (endKey >= 0) {
-        const key: string = field.substring(starKey, endKey).toLowerCase();
-        let value: string = field.substring(starValue + 1).trim();
+        const key: string = field.substring(startKey, endKey).toLowerCase();
+        let value: string = field.substring(startValue + 1).trim();
         if (key === keyNames.TIME) {
           value = value.split(' ')[0];
         }
@@ -30,5 +30,15 @@ export class HelpersService {
       }
     }
     return fieldsMap;
+  }
+
+  parseDateAndTime(dateStr: string, timeStr: string): Date {
+    const [day, month, year] = dateStr.split('/').map(Number);
+    const [hour, minute] = timeStr.split(':').map(Number);
+
+    // Asumiendo que "25" es el año 2025
+    const fullYear = year < 100 ? 2000 + year : year;
+
+    return new Date(fullYear, month - 1, day, hour, minute);
   }
 }
