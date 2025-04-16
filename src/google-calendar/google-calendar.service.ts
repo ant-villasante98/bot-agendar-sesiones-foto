@@ -15,10 +15,21 @@ export class GoogleCalendarService {
       this.configService.get<string>('GOOGLE_CLIENT_SECRET'),
       this.configService.get<string>('GOOGLE_REDIRECT_URI'),
     );
-      this.oauth2Client.setCredentials({
-        access_token: 'a29.a0AZYkNZip5l8hWnQSBw0p2KKHkv9pq32-QdLe3XY2Mp6cpvzAM8FkBXoRe4HLd48rOVF3Nn_YKUkso3d5jBxRJLajGswp01RXNDO9T_UIq6DyGyPN21hz4imBx8otGecdLB1tfDFxgEtTrlAP6Hx-cZHx2FMObU2cQ3Os_N17aCgYKAX0SARMSFQHGX2Mi6FnwcBgC2KMpxu6pq9dykg0175',
-        refresh_token: '1//0hMsZbjMZ3yoBCgYIARAAGBESNwF-L9Ire4X6Qml2huDzmqBltKHJ8hcP5y7IxOkfHbK0XiuUDeb2MAROEihGf8qvzUZTEkUZyoU',
-      });
+  }
+
+  getNewOAuth2Client(accessToken: string, refreshToken: string) {
+    const client = new google.auth.OAuth2(
+      this.configService.get<string>('GOOGLE_CLIENT_ID'),
+      this.configService.get<string>('GOOGLE_CLIENT_SECRET'),
+      this.configService.get<string>('GOOGLE_REDIRECT_URI'),
+    );
+
+    client.setCredentials({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+
+    return client;
   }
 
   async getCalendarId(): Promise<string> {
@@ -38,6 +49,7 @@ export class GoogleCalendarService {
     calendarId: string,
     summary: string,
     dateTime: string,
+    client: OAuth2Client,
   ): Promise<string> {
     const event = {
       summary,
@@ -53,7 +65,7 @@ export class GoogleCalendarService {
 
     try {
       await this.calendar.events.insert({
-        auth: this.oauth2Client,
+        auth: client,
         calendarId,
         requestBody: event,
       });
@@ -68,19 +80,33 @@ export class GoogleCalendarService {
     }
   }
 
-  generateAuthUrl(): string {
-    const url = this.oauth2Client.generateAuthUrl({
+  generateAuthUrl(telegramId: string) {
+    return this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile',
+      ],
       prompt: 'consent',
-      scope: ['https://www.googleapis.com/auth/calendar'],
+      state: telegramId,
     });
-
-    console.log('URL de autorización:', url);
-    return url;
   }
   async getTokens(code: string) {
-    const { tokens } = await this.oauth2Client.getToken(code);
+    const response = await this.oauth2Client.getToken(code);
+    console.log(response);
+    const { tokens } = response;
     this.oauth2Client.setCredentials(tokens);
     return tokens;
+  }
+
+  async getUserIfo(client: OAuth2Client) {
+    const oauth2 = google.oauth2({
+      auth: client,
+      version: 'v2',
+    });
+
+    const { data } = await oauth2.userinfo.get();
+    return data;
   }
 }

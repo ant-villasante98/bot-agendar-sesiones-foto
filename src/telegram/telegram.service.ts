@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { GoogleCalendarService } from 'src/google-calendar/google-calendar.service';
 import { HelpersService } from 'src/helpers/helpers.service';
 import { keyNames } from 'src/interfeces/constas';
+import { UserService } from 'src/user/user.service';
 import { Telegraf } from 'telegraf';
 
 @Injectable()
@@ -10,9 +11,10 @@ export class TelegramService implements OnModuleInit {
   private bot: Telegraf;
 
   constructor(
-    private configService: ConfigService,
-    private helperService: HelpersService,
-    private googleCalendarService: GoogleCalendarService,
+    private readonly configService: ConfigService,
+    private readonly helperService: HelpersService,
+    private readonly googleCalendarService: GoogleCalendarService,
+    private readonly userService: UserService,
   ) {}
 
   onModuleInit() {
@@ -26,7 +28,7 @@ export class TelegramService implements OnModuleInit {
         this.configService.get<string>('HOST') ?? 'http://localhost:3000';
       const authUrl = `${host}/google/auth?telegramId=${telegramId}`;
       await ctx.reply(
-        `[Haz clic aquí para autorizar acceso a tu calendario] (${authUrl})`,
+        `[Haz clic aquí para autorizar acceso a tu calendario:]\n ${authUrl}`,
         { parse_mode: 'Markdown' },
       );
     });
@@ -35,17 +37,17 @@ export class TelegramService implements OnModuleInit {
       ctx.reply('pong');
     });
 
-    this.bot.command('agendar', (ctx) => {
-      const text = ctx.message.text.replace('/agendar', '').trim();
-      ctx.reply(`🗓️ Vamos a agendar: "${text}"`);
-    });
-
     this.bot.hears(/(H|h)ola.*/, (ctx) => {
       ctx.reply(`Hola Chavon!!`);
     });
 
-    this.bot.hears(/.*/, (ctx) => {
+    this.bot.hears(/.*/, async (ctx) => {
       console.log(ctx.from);
+      const user = await this.userService.getByTelegramId(`${ctx.from.id}`);
+      if (!user) {
+        ctx.reply(`Usuario no registrado, ingrese el comando: \n/start`);
+        return;
+      }
       const message = ctx.message.text;
       console.log('Mensaje recibido:', message);
       const fields = this.helperService.getInformation(message);
@@ -57,14 +59,15 @@ export class TelegramService implements OnModuleInit {
       const dateFull: string = this.helperService
         .parseDateAndTime(date, time)
         .toISOString();
-
+      const client = this.googleCalendarService.getNewOAuth2Client(
+        user.accessToken,
+        user.refreshToken,
+      );
       this.googleCalendarService
-        .addEvent('hilares33v@gmail.com', `Sesion para ${name}`, dateFull)
+        .addEvent(user.email, `Sesion para ${name}`, dateFull, client)
         .then(() => {
           // Acá podrías invocar un servicio que procese el mensaje y cree eventos
-          ctx.reply(
-            `Recibí tu mensaje: \nfecha: ${date} \nhora: ${time} \nnombre: ${name} \ndia: ${dateFull}`,
-          );
+          ctx.reply(`Evento agendado.`);
         });
     });
 
