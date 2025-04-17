@@ -42,29 +42,34 @@ export class TelegramService implements OnModuleInit {
     });
 
     this.bot.hears(/.*/, async (ctx) => {
-      console.log(ctx.from);
       const user = await this.userService.getByTelegramId(`${ctx.from.id}`);
       if (!user) {
         ctx.reply(`Usuario no registrado, ingrese el comando: \n/start`);
         return;
       }
       const message = ctx.message.text;
-      console.log('Mensaje recibido:', message);
       const fields = this.helperService.getInformation(message);
-      console.log(fields);
       const name = fields.get(keyNames.NAME) ?? '';
       const time = fields.get(keyNames.TIME) ?? '';
       const date = fields.get(keyNames.DATE) ?? '';
 
-      const dateFull: string = this.helperService
-        .parseDateAndTime(date, time)
-        .toISOString();
+      const dateFull: string = this.helperService.getISODateTime(
+        date,
+        time,
+        user.timeZone,
+      );
       const client = this.googleCalendarService.getNewOAuth2Client(
         user.accessToken,
         user.refreshToken,
       );
       this.googleCalendarService
-        .addEvent(user.email, `Sesion para ${name}`, dateFull, client)
+        .addEvent(
+          user.email,
+          `Sesion para ${name}`,
+          dateFull,
+          client,
+          message.replace(/\*/g, ''),
+        )
         .then(() => {
           // Acá podrías invocar un servicio que procese el mensaje y cree eventos
           ctx.reply(`Evento agendado.`);

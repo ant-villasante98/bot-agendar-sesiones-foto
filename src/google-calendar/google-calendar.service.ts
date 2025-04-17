@@ -50,17 +50,17 @@ export class GoogleCalendarService {
     summary: string,
     dateTime: string,
     client: OAuth2Client,
+    description?: string,
   ): Promise<string> {
     const event = {
       summary,
       start: {
         dateTime,
-        timeZone: 'America/Lima',
       },
       end: {
         dateTime,
-        timeZone: 'America/Lima',
       },
+      description,
     };
 
     try {
@@ -94,7 +94,6 @@ export class GoogleCalendarService {
   }
   async getTokens(code: string) {
     const response = await this.oauth2Client.getToken(code);
-    console.log(response);
     const { tokens } = response;
     this.oauth2Client.setCredentials(tokens);
     return tokens;

@@ -9,12 +9,14 @@ export class UserService {
     telegramId: string,
     accessToken: string,
     refreshToken: string,
+    timeZone: string,
   ) {
     await this.userRespository.add({
       email,
       accessToken,
       refreshToken,
       telegramId,
+      timeZone,
     });
   }
 

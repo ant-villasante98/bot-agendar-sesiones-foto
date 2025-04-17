@@ -3,6 +3,7 @@ import { Controller, Get, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { GoogleCalendarService } from './google-calendar/google-calendar.service';
 import { UserService } from './user/user.service';
+import { google } from 'googleapis';
 
 @Controller()
 export class AppController {
@@ -40,11 +41,17 @@ export class AppController {
         refresh_token,
       );
       const userInfo = await this.calendarService.getUserIfo(client);
+      const googleCalendar = google.calendar({ version: 'v3', auth: client });
+      const calendarInfo = await googleCalendar.calendars.get({
+        calendarId: 'primary',
+      });
+
       await this.userService.saveGoogleTokens(
         userInfo.email!,
         telegramId,
         access_token,
         refresh_token,
+        calendarInfo.data.timeZone!,
       );
       return 'Autenticación exitosa. Ya podés usar el bot para agendar.';
     }
